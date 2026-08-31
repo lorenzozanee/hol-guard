@@ -284,6 +284,17 @@ def test_full_cli_review_continuation_keeps_python_terminal_provenance(
         "codex_plugin_scanner.guard.native_pretool.review_pre_tool_native",
         review_with_resident_receipt,
     )
+    for module_name in (
+        "commands_hook_copilot",
+        "commands_hook_generic",
+        "commands_hook_runtime_review",
+        "commands_support_hook_payload",
+        "commands_support_runtime_resolution",
+    ):
+        monkeypatch.setattr(
+            f"codex_plugin_scanner.guard.cli.{module_name}.schedule_guard_daemon_ensure",
+            lambda _guard_home, **_kwargs: "http://127.0.0.1:4455",
+        )
     reset_native_hook_route()
 
     result = commands_hook._run_guard_hook_command(
