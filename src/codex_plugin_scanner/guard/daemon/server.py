@@ -8261,7 +8261,7 @@ class GuardDaemonServer:
                     finish_lock = threading.Lock()
                     self._finish_service_lock = finish_lock
         with finish_lock:
-            if self._finish_service_completed:
+            if getattr(self, "_finish_service_completed", False):
                 return True
             contained = self._finish_service_locked()
             if contained:
