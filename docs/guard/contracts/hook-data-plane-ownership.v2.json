@@ -219,6 +219,7 @@
         "src/codex_plugin_scanner/guard/native_runtime_admission.py",
         "src/codex_plugin_scanner/guard/native_route_receipt.py",
         "src/codex_plugin_scanner/guard/native_runtime_resident.py",
+        "src/codex_plugin_scanner/guard/native_runtime_resident_transport.py",
         "src/codex_plugin_scanner/guard/native_runtime_resilience.py"
       ],
       "current": "binary identity, client authentication and framing, process lifecycle, reconnect, restart, and fallback budgeting",
