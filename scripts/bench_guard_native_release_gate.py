@@ -163,6 +163,22 @@ def _bench_python_warm(
     return values
 
 
+def _bench_python_warm_reference(*, workspace: Path, guard_home: Path, iterations: int) -> list[float]:
+    with _python_reference_mode():
+        runner = HookProcessRunner(guard_home=guard_home, process_limit=1)
+        runner.start()
+        try:
+            _python_review(runner, workspace=workspace, guard_home=guard_home)
+            return _bench_python_warm(
+                runner,
+                workspace=workspace,
+                guard_home=guard_home,
+                iterations=iterations,
+            )
+        finally:
+            runner.close()
+
+
 def _bench_native_warm(*, workspace: Path, guard_home: Path, iterations: int) -> list[float]:
     values: list[float] = []
     for index in range(iterations):
@@ -186,13 +202,16 @@ def _bench_native_warm(*, workspace: Path, guard_home: Path, iterations: int) ->
 
 def _bench_python_cold(*, workspace: Path, guard_home: Path, iterations: int) -> list[float]:
     values: list[float] = []
-    for _ in range(iterations):
-        runner = HookProcessRunner(guard_home=guard_home, process_limit=1)
-        started = time.perf_counter()
-        runner.start()
-        _python_review(runner, workspace=workspace, guard_home=guard_home)
-        values.append((time.perf_counter() - started) * 1_000.0)
-        runner.close()
+    with _python_reference_mode():
+        for _ in range(iterations):
+            runner = HookProcessRunner(guard_home=guard_home, process_limit=1)
+            started = time.perf_counter()
+            runner.start()
+            try:
+                _python_review(runner, workspace=workspace, guard_home=guard_home)
+                values.append((time.perf_counter() - started) * 1_000.0)
+            finally:
+                runner.close()
     return values
 
 
@@ -272,19 +291,11 @@ def main() -> int:
         guard_home = workspace / "guard-home"
         guard_home.mkdir(mode=0o700)
 
-        with _python_reference_mode():
-            python_runner = HookProcessRunner(guard_home=guard_home, process_limit=1)
-            python_runner.start()
-            try:
-                _python_review(python_runner, workspace=workspace, guard_home=guard_home)
-                python_warm = _bench_python_warm(
-                    python_runner,
-                    workspace=workspace,
-                    guard_home=guard_home,
-                    iterations=args.warm_iterations,
-                )
-            finally:
-                python_runner.close()
+        python_warm = _bench_python_warm_reference(
+            workspace=workspace,
+            guard_home=guard_home,
+            iterations=args.warm_iterations,
+        )
 
         close_resident_native_runtimes()
         try:
